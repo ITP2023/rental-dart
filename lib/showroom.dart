@@ -15,18 +15,18 @@ class Showroom extends StatefulWidget {
 }
 
 class _ShowroomState extends State<Showroom> {
-  List<NavigationItem> navigationItems = getNavigationItemList();
-  late NavigationItem selectedItem;
+  late int selectedItem;
 
   late Future<List<Car>> cars;
-  List<Dealer> dealers = getDealerList();
+  late Future<List<Dealer>> dealers;
 
   @override
   void initState() {
     super.initState();
     cars = fetchCars();
+    dealers = fetchDealers();
     setState(() {
-      selectedItem = navigationItems[0];
+      selectedItem = 0;
     });
   }
 
@@ -151,23 +151,54 @@ class _ShowroomState extends State<Showroom> {
                         future: cars,
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
-                            return const Text("Something went wrong");
+                            return Text("Something went wrong: ${snapshot.error}");
                           }
 
                           if (snapshot.hasData) {
                             return ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.all(16),
                               physics: BouncingScrollPhysics(),
-                              children: snapshot.data!.map((e) => 
+                              children: snapshot.data!.map((e) =>
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(context,  MaterialPageRoute(builder: (context) => BookCar(car: snapshot.data!.first)));
                                 },
-                                child: Container(child: Text(snapshot.data!.first.brand)),
+                                child: Container(
+                                  margin: EdgeInsets.only(left: 5),
+                                  width: 200,
+                                  // alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.00),
+                                    color: Colors.white,
+                                  ),
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Image.network(e.imageURL),
+                                      Text(
+                                        e.model,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20
+                                        ),
+                                      ),
+                                      Text(e.brand),
+                                      Text(e.color)
+                                    ],
+                                  ),
+                                ),
                               )
-                              ).toList(growable: false),
+                              ).toList(),
                             );
                           }
-                          return const CircularProgressIndicator();
+                          return Container(
+                            child: CircularProgressIndicator(),
+                            width: 100,
+                            height: 100,
+                          );
                         },
                       ),
                     ),
@@ -289,11 +320,24 @@ class _ShowroomState extends State<Showroom> {
                     Container(
                       height: 150,
                       margin: EdgeInsets.only(bottom: 16),
-                      child: ListView(
-                        physics: BouncingScrollPhysics(),
-                        scrollDirection: Axis.horizontal,
-                        children: buildDealers(),
+                      child: FutureBuilder<List<Dealer>>(
+                        future: dealers,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text("Something went wrong: ${snapshot.error}");
+                          }
+                          
+                          if (snapshot.hasData) {
+                            return ListView(
+                              physics: const BouncingScrollPhysics(),
+                              scrollDirection: Axis.horizontal,
+                              children: snapshot.data!.map((e) => buildDealer(e, snapshot.data!.indexOf(e))).toList(growable: false),
+                            );
+                          }
+                          return const CircularProgressIndicator();
+                        },
                       ),
+                      
                     ),
 
                   ],
@@ -304,77 +348,39 @@ class _ShowroomState extends State<Showroom> {
 
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          )
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: buildNavigationItems(),
-        ),
-      ),
-    );
-  }
-
-
-  List<Widget> buildDealers(){
-    List<Widget> list = [];
-    for (var i = 0; i < dealers.length; i++) {
-      list.add(buildDealer(dealers[i], i));
-    }
-    return list;
-  }
-
-  List<Widget> buildNavigationItems(){
-    List<Widget> list = [];
-    for (var navigationItem in navigationItems) {
-      list.add(buildNavigationItem(navigationItem));
-    }
-    return list;
-  }
-
-  Widget buildNavigationItem(NavigationItem item){
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedItem = item;
-        });
-      },
-      child: Container(
-        width: 50,
-        child: Stack(
-          children: <Widget>[
-
-            selectedItem == item 
-            ? Center(
-              child: Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: kPrimaryColorShadow,
-                ),
-              ),
+      bottomNavigationBar: StatefulBuilder(
+        builder:(context, setState) => BottomNavigationBar(
+          unselectedItemColor: Colors.white,
+          selectedItemColor: Colors.white,
+          showSelectedLabels: true,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.purple,
+          currentIndex: selectedItem,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled, color: Colors.white),
+              label: "Home",    
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today, color: Colors.white),
+              label: "Reservations",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications, color: Colors.white),
+              label: "Notifications",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, color: Colors.white),
+              label: "Customers",
             )
-            : Container(),
-
-            Center(
-              child: Icon(
-                item.iconData,
-                color: selectedItem == item ? kPrimaryColor : Colors.grey[400],
-                size: 24,
-              ),
-            )
-
           ],
+          onTap: (value) => setState(() {selectedItem = value;}),
         ),
       ),
     );
   }
+
+
 
 }

@@ -18,10 +18,6 @@ Widget buildDealer(Dealer dealer, int index){
 
         Container(
           decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(dealer.image), 
-              fit: BoxFit.cover,
-            ),
             borderRadius: const BorderRadius.all(
               Radius.circular(15),
             ),
@@ -40,14 +36,6 @@ Widget buildDealer(Dealer dealer, int index){
             fontSize: 20,
             fontWeight: FontWeight.bold,
             height: 1,
-          ),
-        ),
-
-        Text(
-          dealer.offers.toString() + " offers",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
           ),
         ),
 

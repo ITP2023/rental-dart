@@ -1,5 +1,5 @@
 import "dart:convert";
-
+import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import "package:http/http.dart" as http;
 import "./constants.dart";
@@ -25,12 +25,13 @@ class Car {
 
   String brand;
   String model;
-  double price; // price per day
+  int price; // price per day
   String color;
   String imageURL;
 
   Car({required this.brand, required this.model, required this.price, required this.color, required this.imageURL});
   factory Car.fromJSON(Map<String, dynamic> json) {
+    print(json.toString());
     return Car(
       brand: json["brand"],
       model: json["model"],
@@ -43,10 +44,10 @@ class Car {
 
 Future<List<Car>> fetchCars() async {
   final http.Response response = await http.get(Uri.parse("$API_URL/cars"));
-  dynamic raw = jsonDecode(response.body).cars;
+  dynamic raw = jsonDecode(response.body);
   List<Car> result = List<Car>.empty(growable: true);
   for (int i = 0; i < raw.length; i++) {
-    result[i] = Car.fromJSON(raw[i]);
+    result.add(Car.fromJSON(raw[i]));
   }
   return result;
 }
@@ -55,12 +56,12 @@ Future<List<Car>> fetchCars() async {
 class Dealer {
 
   String name;
-  int offers;
-  String image;
 
 
-  Dealer(this.name, this.offers, this.image);
-
+  Dealer(this.name);
+  factory Dealer.fromJSON(Map<String, dynamic> json) {
+    return Dealer(json["name"]);
+  }
 }
 
 
@@ -70,4 +71,15 @@ class Filter {
 
   Filter(this.name);
 
+}
+
+
+Future<List<Dealer>> fetchDealers() async  {
+  final response = await http.get(Uri.parse("$API_URL/dealers"));
+  final raw = jsonDecode(response.body);
+  List<Dealer> result = List<Dealer>.empty(growable: true);
+  for (int i = 0; i < raw.length; i++) {
+    result.add(Dealer.fromJSON(raw[i]));
+  }
+  return result;
 }
